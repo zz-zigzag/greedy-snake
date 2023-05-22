@@ -15,14 +15,40 @@ let snake = [];
 let direction = "right";
 let food = null;
 
+// 障碍物数组
+let obstacles = [];
+// 定义移动定时器变量
+let moveInterval;
+// 定义初始速度和速度增量
+let initialSpeed = 200;  // 初始速度（单位：毫秒）
+let speedIncrement = 10; // 速度增量（单位：毫秒）
 
-// 绘制得分
-function drawScore(ctx) {
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "black";
-  ctx.textAlign = "left";
-  ctx.fillText("Score: " + score, blockSize, blockSize);
+let scoreThreshold = 10;       // 分数阈值
+let level = 1;
+
+// 生成障碍物
+function generateObstacles() {
+  // 清空障碍物数组
+  obstacles = [];
+
+  // 生成障碍物数量
+  const numObstacles = 5;
+
+  // 随机生成障碍物的位置
+  while (obstacles.length < numObstacles) {
+    const obstacleX = Math.floor(Math.random() * widthInBlocks);
+    const obstacleY = Math.floor(Math.random() * heightInBlocks);
+
+    // 确保障碍物不会与蛇头或食物位置重叠
+    const overlapping = snake.some((block) => block[0] === obstacleX && block[1] === obstacleY) ||
+      (food[0] === obstacleX && food[1] === obstacleY);
+
+    if (!overlapping) {
+      obstacles.push([obstacleX, obstacleY]);
+    }
+  }
 }
+
 
 // 检查蛇是否碰到了边界或自身
 function checkCollision() {
@@ -38,8 +64,9 @@ function checkCollision() {
   const hitBottomWall = snakeY >= heightInBlocks;
 
   const hitSelf = body.some(([x, y]) => x === snakeX && y === snakeY);
+  const hitObstacle = obstacles.some((obstacle) => obstacle[0] === head[0] && obstacle[1] === head[1]);
 
-  return hitLeftWall || hitRightWall || hitTopWall || hitBottomWall || hitSelf;
+  return hitLeftWall || hitRightWall || hitTopWall || hitBottomWall || hitSelf || hitObstacle;
 }
 
 // 生成随机的食物位置
@@ -79,6 +106,23 @@ function drawScore(ctx) {
   ctx.fillStyle = "black";
   ctx.textAlign = "left";
   ctx.fillText("Score: " + score, blockSize, blockSize);
+}
+
+// 绘制得分
+function drawLevel(ctx) {
+  ctx.font = "20px Arial";
+  ctx.fillStyle = "black";
+  ctx.textAlign = "left";
+  ctx.fillText("Level: " + level, 150, 20);
+}
+
+
+
+// 绘制障碍物
+function drawObstacles(ctx) {
+  obstacles.forEach((obstacle) => {
+    drawBlock(ctx, obstacle, "gray");
+  });
 }
 
 // 处理键盘事件，改变蛇的移动方向
@@ -139,6 +183,21 @@ function updateSnake() {
   if (head[0] === food[0] && head[1] === food[1]) {
     score += 1;
     generateFood();
+      // 根据分数调整蛇的速度
+    level = Math.floor(score / scoreThreshold) + 1;
+    let currentSpeed = initialSpeed - (level * speedIncrement);
+
+    // 限制最小速度
+    if (currentSpeed < 50) {
+      currentSpeed = 50;
+    }
+    // 更新移动定时器
+    clearInterval(moveInterval);
+    moveInterval =  setInterval(() => {
+      updateSnake();
+      render();
+    }, currentSpeed);
+
   } else {
     snake.pop();
   }
@@ -155,16 +214,14 @@ function render() {
   drawSnake(ctx);
   drawFood(ctx);
   drawScore(ctx);
+  drawLevel(ctx);
+  // 绘制障碍物
+  drawObstacles(ctx);
 
   if (checkCollision()) {
     gameOver(ctx);
     return;
   }
-
-  setTimeout(() => {
-    updateSnake();
-    render();
-  }, 100);
 }
 
 // 游戏结束
@@ -173,7 +230,49 @@ function gameOver(ctx) {
   ctx.fillStyle = "red";
   ctx.textAlign = "center";
   ctx.fillText("Game Over", canvasSize.width / 2, canvasSize.height / 2);
+  clearInterval(moveInterval);
 }
+
+// 定义触摸起始位置
+let touchStartX = 0;
+let touchStartY = 0;
+// 处理触摸开始事件
+function handleTouchStart(event) {
+  const touch = event.touches[0];
+  touchStartX = touch.clientX;
+  touchStartY = touch.clientY;
+}
+
+// 处理触摸结束事件
+function handleTouchEnd(event) {
+  const touch = event.changedTouches[0];
+  const touchEndX = touch.clientX;
+  const touchEndY = touch.clientY;
+
+  const deltaX = touchEndX - touchStartX;
+  const deltaY = touchEndY - touchStartY;
+
+  // 判断滑动方向
+  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    // 水平滑动
+    if (deltaX > 0 && direction !== "left") {
+      // 向右滑动
+      direction = "right";
+    } else if (deltaX < 0 && direction !== "right") {
+      // 向左滑动
+      direction = "left";
+    }
+  } else {
+    // 垂直滑动
+    if (deltaY > 0 && direction !== "up") {
+      // 向下滑动
+      direction = "down";
+    } else if (deltaY < 0 && direction !== "down") {
+      // 向上滑动
+      direction = "up";
+    }
+  }}
+
 
 // 初始化游戏
 function init() {
@@ -182,10 +281,17 @@ function init() {
   score = 0;
 
   generateFood();
-
+  generateObstacles();
   document.addEventListener("keydown", handleKeyPress);
+// 添加触摸事件监听器
+  document.addEventListener("touchstart", handleTouchStart);
+  document.addEventListener("touchend", handleTouchEnd);
 
   render();
+  moveInterval =  setInterval(() => {
+    updateSnake();
+    render();
+  }, initialSpeed);
 }
 
 // 启动游戏
