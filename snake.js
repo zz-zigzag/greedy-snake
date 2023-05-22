@@ -26,6 +26,8 @@ let speedIncrement = 10; // 速度增量（单位：毫秒）
 let scoreThreshold = 10;       // 分数阈值
 let level = 1;
 
+let canModifyDirection = true;  // 同一帧内不能多次改变方向
+
 // 生成障碍物
 function generateObstacles() {
   // 清空障碍物数组
@@ -136,10 +138,16 @@ function handleKeyPress(event) {
     if (isOppositeDirection(newDirection, direction)) {
       return;
     }
+
+    // 一个加速的功能
     if (direction === newDirection) {
       moveSnake();
     }
-    direction = newDirection;
+
+    if (canModifyDirection) {
+      direction = newDirection;
+      canModifyDirection = false;
+    }
   }
 }
 
@@ -206,7 +214,7 @@ function updateSnake() {
 function render() {
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
-  
+
   if (checkCollision()) {
     gameOver(ctx);
     return;
@@ -219,8 +227,7 @@ function render() {
   drawLevel(ctx);
   // 绘制障碍物
   drawObstacles(ctx);
-
-
+  canModifyDirection = true;
 }
 
 // 游戏结束
