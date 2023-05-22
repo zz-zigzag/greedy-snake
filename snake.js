@@ -99,7 +99,7 @@ function drawFood(ctx) {
   drawBlock(ctx, food, "red");
 }
 
-  
+
 // 绘制得分
 function drawScore(ctx) {
   ctx.font = "20px Arial";
@@ -136,7 +136,9 @@ function handleKeyPress(event) {
     if (isOppositeDirection(newDirection, direction)) {
       return;
     }
-
+    if (direction === newDirection) {
+      moveSnake();
+    }
     direction = newDirection;
   }
 }
@@ -183,7 +185,7 @@ function updateSnake() {
   if (head[0] === food[0] && head[1] === food[1]) {
     score += 1;
     generateFood();
-      // 根据分数调整蛇的速度
+    // 根据分数调整蛇的速度
     level = Math.floor(score / scoreThreshold) + 1;
     let currentSpeed = initialSpeed - (level * speedIncrement);
 
@@ -193,11 +195,7 @@ function updateSnake() {
     }
     // 更新移动定时器
     clearInterval(moveInterval);
-    moveInterval =  setInterval(() => {
-      updateSnake();
-      render();
-    }, currentSpeed);
-
+    moveInterval = setInterval(moveSnake, currentSpeed);
   } else {
     snake.pop();
   }
@@ -208,7 +206,11 @@ function updateSnake() {
 function render() {
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
-
+  
+  if (checkCollision()) {
+    gameOver(ctx);
+    return;
+  }
   ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
   drawSnake(ctx);
@@ -218,10 +220,7 @@ function render() {
   // 绘制障碍物
   drawObstacles(ctx);
 
-  if (checkCollision()) {
-    gameOver(ctx);
-    return;
-  }
+
 }
 
 // 游戏结束
@@ -271,7 +270,8 @@ function handleTouchEnd(event) {
       // 向上滑动
       direction = "up";
     }
-  }}
+  }
+}
 
 
 // 初始化游戏
@@ -283,16 +283,17 @@ function init() {
   generateFood();
   generateObstacles();
   document.addEventListener("keydown", handleKeyPress);
-// 添加触摸事件监听器
+  // 添加触摸事件监听器
   document.addEventListener("touchstart", handleTouchStart);
   document.addEventListener("touchend", handleTouchEnd);
 
   render();
-  moveInterval =  setInterval(() => {
-    updateSnake();
-    render();
-  }, initialSpeed);
+  moveInterval = setInterval(moveSnake, initialSpeed);
 }
 
+function moveSnake() {
+  updateSnake();
+  render();
+}
 // 启动游戏
 init();
