@@ -103,19 +103,13 @@ function drawFood(ctx) {
 
 
 // 绘制得分
-function drawScore(ctx) {
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "black";
-  ctx.textAlign = "left";
-  ctx.fillText("Score: " + score, blockSize, blockSize);
+function updateScore(score) {
+  document.getElementById("score").textContent = "Score: " + score;
 }
 
 // 绘制得分
-function drawLevel(ctx) {
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "black";
-  ctx.textAlign = "left";
-  ctx.fillText("Level: " + level, 150, 20);
+function  updateLevel(level) {
+  document.getElementById("level").textContent = "Level: " + level;
 }
 
 
@@ -223,8 +217,8 @@ function render() {
 
   drawSnake(ctx);
   drawFood(ctx);
-  drawScore(ctx);
-  drawLevel(ctx);
+  updateScore(score);
+  updateLevel(level);
   // 绘制障碍物
   drawObstacles(ctx);
   canModifyDirection = true;
