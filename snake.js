@@ -231,6 +231,7 @@ function gameOver(ctx) {
   ctx.textAlign = "center";
   ctx.fillText("Game Over", canvasSize.width / 2, canvasSize.height / 2);
   clearInterval(moveInterval);
+  document.removeEventListener("keydown", handleKeyPress);
 }
 
 // 定义触摸起始位置
