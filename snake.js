@@ -73,9 +73,14 @@ function checkCollision() {
 
 // 生成随机的食物位置
 function generateFood() {
-  const x = Math.floor(Math.random() * widthInBlocks);
-  const y = Math.floor(Math.random() * heightInBlocks);
+  let x = 0;
+  let y = 0;
 
+  do {
+    x = Math.floor(Math.random() * widthInBlocks);
+    y = Math.floor(Math.random() * heightInBlocks)
+  } while(snake.some((block) =>  block[0] === x && block[1] === y) ||
+  obstacles.some((block) => block[0] === x && block[1] === y));
   food = [x, y];
 }
 
